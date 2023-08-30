@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+ <meta charset="utf-8">
+ <meta http-equiv="X-UA-Compatible" content="IE=edge">
+ <meta name="viewport" content="width=device-width,initial-scale=1/0">
+ <title>Document</title>
+ <style>
+    div {
+        position: absolute;
+        left: 700px;
+        bottom: 0px;
+        width: 50px;
+        height: 50px;
+        background-color: #EEC900;
+        border: 1px solid green;
+    }
+ </style>
+ </head>
+ <body id = 'bodyId'>
+    <div id="div"></div>
+
+    <script type="text/javascript">
+        var bodyBackground = document.getElementById('bodyId')
+        bodyBackground.style.backgroundColor = '#8cc8c8'
+        
+        var ballTimerArray = []
+        var totalScore = 0
+        var leftTime = 60;
+        var div = document.getElementById("div");
+        div.innerText = '0\n0'
+        document.onkeyup = function(event) {
+            var e = event ? event : window.event;
+            if (e.keyCode == 65 || e.keyCode == 37) {
+                if (div.offsetLeft <= 0) {
+                    return
+                }
+                div.style.left = div.offsetLeft - 50 + 'px';
+            } else if (e.keyCode == 68 || e.keyCode == 39) {
+                var offsetRight = window.innerWidth - div.offsetLeft - div.offsetWidth - 50
+                if (offsetRight <= 0) {
+                    return
+                }
+                div.style.left = div.offsetLeft + 50 + 'px';
+            }
+        }
+        var addBallDivTimer = null;
+
+        var leftTimeDiv = document.createElement('div');
+        leftTimeDiv.setAttribute('id', 'leftTimeDiv');
+        leftTimeDiv.style.position = 'absolute';
+        leftTimeDiv.style.height = 200 + 'px';
+        leftTimeDiv.style.width = 200 + 'px';
+        leftTimeDiv.style.backgroundColor = '#8cc8c8';
+        leftTimeDiv.style.borderStyle = 'none';
+        leftTimeDiv.style.left = window.innerWidth * 0.4 + 'px';
+        leftTimeDiv.style.top = window.innerHeight * 0.3 + 'px';
+        leftTimeDiv.innerText = leftTime;
+        leftTimeDiv.style.fontSize = '300px';
+        leftTimeDiv.style.textAlign = 'center';
+        leftTimeDiv.style.color = '#FF6347';
+        leftTimeDiv.style.lineHeight = 200 + 'px';
+
+        document.body.appendChild(leftTimeDiv)
+        var timeSlice = 0;
+        var descTimer = setInterval(function() {
+            if (leftTime <= 0) {
+                clearInterval(addBallDivTimer)
+                clearInterval(descTimer)
+                ballTimerArray.forEach((item, index, arr) => {
+                    clearInterval(arr[index])
+                });
+                gameOver(totalScore);
+            } else {
+                timeSlice++;
+                if (timeSlice >= 10) {
+                    leftTime--;
+                    timeSlice = 0;
+                }
+            }
+            
+            leftTimeDiv.innerText = leftTime
+        }, 100);
+
+        var ballDivIdIndex = 1;
+        
+        var failedTimes = 0;
+        addBallDivTimer = setInterval(function() {
+            var ballDiv = document.createElement('div');
+            ballDiv.setAttribute('id', 'ballDiv' + ballDivIdIndex);
+            ballDiv.style.position = 'absolute';
+            ballDiv.style.height = 50 + 'px';
+            ballDiv.style.width = 50 + 'px';
+            ballDiv.style.borderRadius = '50%';
+            var leftPadding = parseInt(Math.random() * (window.innerWidth - 100))
+            ballDiv.style.left = leftPadding <= 55 ? (55 + 'px') : leftPadding >= (window.innerWidth - 55) ? (window.innerWidth - 55 + 'px') : leftPadding + 'px';
+            ballDiv.style.top = 0 + 'px';
+            var textValue = getTraValue();
+            ballDiv.innerText = textValue;
+            ballDiv.style.textAlign = 'center';
+            ballDiv.style.lineHeight = 50 + 'px';
+            ballDiv.style.backgroundColor = getBackgroundColor(textValue);
+
+            var ballDivTimer = setInterval(function() {
+                ballTimerArray.push(ballDivTimer)
+                ballDiv.style.top = ballDiv.offsetTop + 1 + 'px'
+                var ballDivOffsetTop = window.innerHeight - ballDiv.offsetTop - 50
+                var ballDivRemoved = false;
+                if (ballDivOffsetTop < 50) {
+                    var currentLeft = ballDiv.offsetLeft;
+                    var divLeft = div.offsetLeft;
+                    if ((currentLeft <= divLeft && currentLeft + 50 > divLeft) || (currentLeft > divLeft && currentLeft < divLeft + 50)) {
+                        if (ifPrime(textValue)) {
+                            totalScore += textValue
+                            div.innerText = totalScore + '\n' + failedTimes
+                            leftTime += 4
+                        } else {
+                            failedTimes++;
+                            div.innerText = totalScore + '\n' + failedTimes;
+                            if (failedTimes >= 3) {
+                                clearInterval(addBallDivTimer)
+                                clearInterval(ballDivTimer)
+                                clearInterval(descTimer)
+                                ballTimerArray.forEach((item, index, arr) => {
+                                    clearInterval(arr[index])
+                                });
+                                document.body.removeChild(ballDiv)
+                                ballDivRemoved = true;
+                                gameOver(totalScore);
+                            }
+                        }
+                    }
+                    if (!ballDivRemoved) {
+                        document.body.removeChild(ballDiv)
+                    }
+                    clearInterval(ballDivTimer)
+                }
+            }, 10);
+            document.body.appendChild(ballDiv)
+            ballDivIdIndex = ballDivIdIndex + 1;
+        }, 400);
+
+        function getTraValue() {
+            var val = parseInt(Math.random() * 100);
+            return val > 1 ? val : val + 2;
+        }
+
+        var primeArray = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97];
+        function ifPrime(val) {
+            return primeArray.includes(val)
+        }
+
+        var colorArray = [
+        '#C0C0C0','#FF4500','#D2691E','#00FFFF','#6B8E23','#808A87','#FAF0E6','#8A360F','#40E0D0','#FF34B3',
+        '#FAEBD7','#FFFF00','#FF7D40','#7FFFD4','#308014','#708069','#FFDEAD','#873324','#EEEE00','#FFBBFF',
+        '#FFFFCD','#E3CF57','#F0E68C','#00FF00','#2E8B57','#808069','#FDF5E6','#A0522D','#CDCD00','#FFE1FF',
+        '#FCE6C9','#FFD700','#BC8F8F','#7FFF00','#00FF7F','#F0FFFF','#FF9912','#D2B48C','#FFC125','#D1EEEE',
+        '#FAFFF0','#DAA569','#F4A460','#3D9140','#A020F0','#F5F5F5','#EB8E55','#1E90FF','#EEB422','#87CEFF',
+        '#FFF5EE','#E3A869','#3D59AB','#00C957','#8A2BE2','#FFF8DC','#00E5EE','#C1FFC1','#EEB4B4','#C1CDCD',
+        '#FF7F50','#FF6103','#33A1C9','#228B22','#A066D3','#FFFAF0','#FF6100','#03A89E','#FFD39B','#EEE9BF',
+        '#B03060','#ED9121','#00C78C','#7CFC00','#9933FA','#DCDCDC','#C76114','#4169E1','#FF8C69','#CDB79E',
+        '#FFC0CB','#F5DEB3','#B0E0E6','#32CD32','#DA70D6','#F8F8FF','#FF8000','#6A5ACD','#FFA500','#CDC9C9',
+        '#872657','#A39480','#87CEEB','#BDFCC9','#DDA0DD','#F0FFF0','#802A2A','#385E0F','#FFB5C5','#ADFF2F'
+        ];
+        function getBackgroundColor(val) {
+            return colorArray[val]
+        }
+        function gameOver(totalScore) {
+            var name = prompt('游戏结束,得分: ' + totalScore, "输入你的大名")
+
+            var breakMaxScore = false;
+            var totalMaxScore = 0;
+            var totalMaxName = '';
+            for (var i = 0; i < localStorage.length; i++) {
+                var recordKey = localStorage.key(i);
+                var record = JSON.parse(localStorage.getItem(recordKey));
+                if (record.maxScore > totalMaxScore) {
+                    totalMaxScore = record.maxScore;
+                    totalMaxName = recordKey;
+                }
+            }
+
+            if (totalScore > totalMaxScore) {
+                totalMaxScore = totalScore;
+                totalMaxName = name;
+                breakMaxScore = true;
+            }
+            var scoreRefresh = false;
+
+            if (localStorage.hasOwnProperty(name)) {
+                var recordStored = JSON.parse(localStorage.getItem(name));
+
+                var curRecord = {};
+                curRecord.score = totalScore;
+                curRecord.time = new Date().toLocaleString();
+                recordStored.score.push(curRecord);
+                
+                if (recordStored.maxScore < totalScore) {
+                    recordStored.maxScore = totalScore;
+                    recordStored.maxScoreTime = curRecord.time;
+                    
+                    scoreRefresh = true;
+                }
+                localStorage.setItem(name, JSON.stringify(recordStored));
+            } else {
+                var recordStored = {};
+                recordStored.maxScore = totalScore;
+                recordStored.maxScoreTime = new Date().toLocaleString();
+
+                var score = [];
+                var curRecord = {};
+                curRecord.time = recordStored.maxScoreTime;
+                curRecord.score = totalScore;
+                score.push(curRecord);
+
+                recordStored.score = score;
+                localStorage.setItem(name, JSON.stringify(recordStored));
+                scoreRefresh = true;
+            }
+            
+            var str = name + ', 你此次未打破纪录.<br>个人游戏记录:<br>';
+            if (breakMaxScore) {
+                if (scoreRefresh) {
+                    str = name + ', 你打破了最高记录,且刷新了个人记录!<br>个人游戏记录:<br>';
+                } else {
+                    str = name + ', 你打破了最高记录!<br>个人游戏记录:<br>';
+                }
+            } else {
+                if (scoreRefresh) {
+                    str = name + ', 你刷新了个人记录!<br>个人游戏记录:<br>';
+                }
+            }
+            str = '最高记录保持者: ' + totalMaxName + ', 最高记录分数: ' + totalMaxScore + '<br>' + str;
+            var gameRecord = JSON.parse(localStorage.getItem(name));
+            gameRecord.score.forEach((item, index, arr) => {
+                str += '分数: ' + arr[index].score + ', 时间: ' + arr[index].time + '<br>'
+            });
+            document.write(str);
+        }
+    </script>
+ </body>
+</html>
